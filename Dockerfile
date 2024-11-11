@@ -25,6 +25,14 @@ WORKDIR /downloads
 RUN /get_server.sh
 
 
+FROM docker.io/golang:1-alpine as build-agent
+
+COPY ./potion-agent /build
+WORKDIR /build
+
+RUN go build ./cmd/init
+
+
 #FROM ghcr.io/graalvm/graalvm-community:23.0.0 as mc
 # FROM docker.io/amazoncorretto:23-alpine as mc
 FROM gcr.io/distroless/java21-debian12 as gamefs
@@ -32,6 +40,10 @@ FROM gcr.io/distroless/java21-debian12 as gamefs
 WORKDIR /server
 COPY --from=download-minecraft /downloads/server.jar .
 COPY ./gamefs/eula.txt .
+
+
+# Copy potion-agent init binary
+COPY --from=build-agent /build/init /init
 
 ENTRYPOINT [ "java", "-jar", "server.jar" ]
 
